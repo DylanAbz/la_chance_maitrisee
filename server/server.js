@@ -10,12 +10,100 @@ const io = new Server(server, {
     }
 });
 
+let playersSockets = []
+let turn = 0;
+
+function startTurn() {
+    if (turn < 3) {
+        openConnections()
+        turn++
+    } else {
+        endGame()
+    }
+}
+
+function endGame() {
+    for (let playersSocket of playersSockets) {
+        playersSocket.socket.disconnect()
+    }
+    playersSockets = []
+    turn = 0
+}
+
+function openConnections() {
+    let tossCounter = 0
+    for (let playerSocket of playersSockets) {
+        playerSocket.socket.on("bet", (data) => {
+            if (playerSocket.toss === undefined){
+                playerSocket["bet"] = data.bet
+                playerSocket["toss"] = data.toss
+                tossCounter++
+                if (tossCounter === 3) processToss()
+            }
+        })
+    }
+}
+
+function processToss(){
+    let toss = Math.round(Math.random())
+    for (let playerSocket of playersSockets) {
+        if (playerSocket.toss === toss) {
+            playerSocket.score += 10
+            playerSocket.score += playerSocket.bet
+        }else {
+            playerSocket.score -= playerSocket.bet
+        }
+        delete playerSocket.bet
+        delete playerSocket.toss
+    }
+}
+
+function sendPlayersListAndScore() {
+    let list = []
+    for (let playerSocket of playersSockets) {
+        list.push({
+            name: playerSocket.name,
+            score: playerSocket.score,
+        })
+    }
+    io.to("playersRoom").emit("players", list)
+}
+
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
 
-    socket.on('disconnect', () => {
-        console.log('user disconnected', socket.id);
-    });
+    if (playersSockets.length < 3){
+        let playerName = socket.playerName ? socket.playerName : "Player " + (playersSockets.length + 1)
+        playersSockets.push({
+            socket: socket,
+            name: playerName,
+            score: 100
+        })
+        socket.join("playersRoom")
+        sendPlayersListAndScore()
+        if (playersSockets.length === 3){
+            startTurn()
+        }
+        socket.on('disconnect', () => {
+            let newPlayers = []
+            for (let playersSocket of playersSockets) {
+                if (playersSocket.socket.id !== socket.id){
+                    newPlayers.push(playersSocket)
+                }else {
+                    console.log('user disconnected : ' + playersSocket.name);
+                }
+            }
+            playersSockets = newPlayers
+        });
+        socket.on('message', (message) => {
+            socket.broadcast.emit("message", {
+                emitter: playerName,
+                content: message
+            })
+        })
+    } else {
+        socket.emit("connectionRefused")
+    }
 });
 
 server.listen(3000, () => {
