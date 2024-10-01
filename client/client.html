@@ -1,19 +1,82 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Jeu de la chance</title>
+    <style>
+        #game {
+            margin-top: 20px;
+            display: none;
+        }
+
+        #chat {
+            margin-top: 20px;
+            display: none;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 24px;
+            color: green;
+        }
+    </style>
 </head>
 <body>
+<h1>Le jeu de la chance</h1>
+
+<div id="formulaire">
+    <form id="pseudoform">
+        <label for="pseudo">Entrez votre pseudo :</label>
+        <input type="text" id="pseudo" required>
+        <button type="submit">Valider</button>
+    </form>
+</div>
+
+<div id="player-info">
+    <p id="player-name"></p>
+</div>
+
+<div id="game">
+    <button id="zero">0</button>
+    <button id="un">1</button>
+</div>
+
+<div id="result"></div>
+
 <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
 <script>
-    const socket = io('http://localhost:3000')
+    const socket = io('http://localhost:3000');
+    let playerName = '';
+
+    document.getElementById('pseudoform').addEventListener('submit', (e) => {
+        e.preventDefault();
+        playerName = document.getElementById('pseudo').value.trim();
+
+        if (playerName) {
+            document.getElementById('pseudoform').style.display = 'none';
+            document.getElementById('player-name').textContent = `Joueur : ${playerName}`;
+            document.getElementById('game').style.display = 'block';
+            document.getElementById('chat').style.display = 'block';
+        }
+    });
+
+    document.getElementById('zero').addEventListener('click', () => {
+        socket.emit('play', { player: playerName, choice: 0 });
+    });
+
+    document.getElementById('un').addEventListener('click', () => {
+        socket.emit('play', { player: playerName, choice: 1 });
+    });
+
+    socket.on('result', (data) => {
+        document.getElementById('result').textContent = `Résultat : ${data.result} (${data.player})`;
+    });
+
     socket.on('connect', () => {
-        console.log('connected')
-    })
+        console.log('connected');
+    });
 </script>
 </body>
 </html>
