@@ -153,6 +153,8 @@ function createNewRoom() {
         for (let index = 0; index < 3; index++) {
             let playerInfo = getPlayersInfosFromSocket(waitingRoomQueue.shift())
             playerInfo.room = roomName
+            playerInfo.socket.leave("waitingRoom")
+            playerInfo.socket.join(roomName)
         }
         openConnections(roomName)
     } else{
@@ -182,6 +184,7 @@ io.on('connection', (socket) => {
                 score: 100,
                 room: "waitingRoom"
             })
+            socket.join("waitingRoom")
             socket.on('joinGame', () => {
                 waitingRoomQueue.push(socket.id)
                 if (waitingRoomQueue.length === 3){
@@ -201,7 +204,8 @@ io.on('connection', (socket) => {
             playersInfos = newPlayers
         });
         socket.on('message', (message) => {
-            io.to(getPlayersInfosFromSocket(socket).room).emit("message", {
+            console.log(getPlayersInfosFromSocket(socket).room)
+            io.to(getPlayersInfosFromSocket(socket).room.toString()).emit("message", {
                 emitter: message.name,
                 content: message.text
             })
