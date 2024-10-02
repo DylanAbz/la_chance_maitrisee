@@ -105,25 +105,22 @@
             }
         });
 
-document.getElementById('joinbutton').addEventListener('click', (e) => {
-    e.preventDefault();
-    console.log("Rejoint la liste d'attente");
+        document.getElementById('joinbutton').addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log("Rejoint la liste d'attente");
 
-    // Émet l'événement indiquant que le joueur veut rejoindre la partie
-    socket.emit('joinQueue', playerName);
+            socket.emit('joinQueue', playerName);
 
-    // Cache le bouton "Rejoindre la partie" et affiche un message de liste d'attente
-    document.getElementById('joingame').innerHTML = '<p>En attente de joueurs...</p>';
-});
+            document.getElementById('joingame').innerHTML = '<p>En attente de joueurs...</p>';
+        });
 
-// Écoute l'événement lorsque 3 joueurs sont prêts à jouer
-socket.on('gameReady', () => {
-    console.log("Partie prête, démarrage du jeu");
+        
+        socket.on('gameReady', () => {
+            console.log("Partie prête, démarrage du jeu");
 
-    // Afficher la div du jeu et masquer le message de liste d'attente
-    document.getElementById('game').style.display = 'block';
-    document.getElementById('joingame').style.display = 'none';
-});
+            document.getElementById('game').style.display = 'block';
+            document.getElementById('joingame').style.display = 'none';
+        });
 
 
         socket.on("score", (score) => {
@@ -143,10 +140,10 @@ socket.on('gameReady', () => {
         });
 
         socket.on('players', (players) => {
-            console.log("Receiving players: ", players);  // Vérifie bien que les joueurs sont reçus
+            console.log("Receiving players: ", players);
 
             let playerListElement = document.getElementById('player-list');
-            playerListElement.innerHTML = '';  // Vide la liste avant de la remplir
+            playerListElement.innerHTML = '';
 
             players.forEach(player => {
                 let playerItem = document.createElement('li');
