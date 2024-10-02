@@ -1,12 +1,13 @@
 import { Server } from 'socket.io';
 import express from 'express';
 import http from 'http';
+import { log } from 'console';
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:63342', 'http://localhost'],
+        origin: '*',
     }
 });
 
@@ -34,6 +35,7 @@ function openConnections() {
     let tossCounter = 0
     for (let playerSocket of playersSockets) {
         playerSocket.socket.on("bet", (data) => {
+            console.log("Open connections");
             if (playerSocket.toss === undefined){
                 playerSocket["bet"] = data.bet
                 playerSocket["toss"] = data.toss
@@ -69,12 +71,15 @@ function sendPlayersListAndScore() {
     io.to("playersRoom").emit("players", list)
 }
 
+
+
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
 
     if (playersSockets.length < 3){
         socket.join("playersRoom")
         socket.on("changeName", (name)=> {
+            console.log(name)
             let playerName = name ? name : "Player " + (playersSockets.length + 1)
             playersSockets.push({
                 socket: socket,
@@ -97,12 +102,12 @@ io.on('connection', (socket) => {
             }
             playersSockets = newPlayers
         });
-        socket.on('message', (message) => {
-            socket.broadcast.emit("message", {
-                emitter: playerName,
-                content: message
-            })
-        })
+
+        socket.on('message', (msg) => {
+            const playerName = players[socket.id];
+            io.emit('message', { emitter: playerName, content: msg });
+          });
+
     } else {
         socket.emit("connectionRefused")
     }

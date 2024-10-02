@@ -48,13 +48,13 @@
 
 <div id="game">
     <form id="betform">
-        <label id="bet">Votre mise :</label>
+        <label>Votre mise :</label>
         <input type="number" id="bet" required>
         <select id="toss">
             <option value="0">Pile</option>
             <option value="1">Face</option>
         </select>
-    <button type="submit">Envoyer</button>
+        <button type="submit">Envoyer</button>
     </form>
 </div>
 
@@ -89,7 +89,8 @@
         }
     });
 
-    document.getElementById('betform').addEventListener('submit', () => {
+    document.getElementById('betform').addEventListener('submit', (e) => {
+        e.preventDefault();
         let bet = document.getElementById('bet').value;
         let toss = document.getElementById('toss').value;
         socket.emit('bet', { bet: bet, toss: toss });
@@ -100,26 +101,28 @@
     });
 
     document.getElementById('chatform').addEventListener('submit', (e) => {
-        e.preventDefault(); 
-        const messageInput = document.getElementById('message');
-        const messageText = messageInput.value.trim();
+    e.preventDefault(); 
+    console.log("Message envoyé");
+    const messageInput = document.getElementById('message');
+    const messageText = messageInput.value.trim();
+    if (messageText) {
+        socket.emit('message', messageText); 
+        messageInput.value = '';
+    }
+});
 
-        if (messageText) {
-            socket.emit('message', messageText); 
 
-            messageInput.value = '';
-        }
-    });
+socket.on('message', (data) => {
+    console.log('Message reçu du serveur : ', data);
+    const messageDiv = document.createElement('div');
+    messageDiv.textContent = `${data.emitter}: ${data.content}`;
 
-    socket.on('message', (data) => {
-        const messageDiv = document.createElement('div');
-        messageDiv.textContent = `${data.emitter}: ${data.content}`; // Format du message
+    document.getElementById('listemessages').appendChild(messageDiv);
 
-        document.getElementById('listemessages').appendChild(messageDiv);
+    const listemessagesDiv = document.getElementById('listemessages');
+    listemessagesDiv.scrollTop = listemessagesDiv.scrollHeight;
+});
 
-        const listemessagesDiv = document.getElementById('listemessages');
-        listemessagesDiv.scrollTop = listemessagesDiv.scrollHeight;
-    });
 
     socket.on('connect', () => {
         console.log('connected');
