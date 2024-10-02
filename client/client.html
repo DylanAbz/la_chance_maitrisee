@@ -85,7 +85,7 @@
             document.getElementById('chat').style.display = 'block';  
             document.getElementById('formulaire').style.display = 'none';  
 
-            socket.emit('message', playerName + ' a rejoint le jeu');
+            socket.emit('changeName', playerName);
         }
     });
 
