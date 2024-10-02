@@ -6,18 +6,40 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: "*",
+        origin: "http://localhost:63342",
     }
 });
 
-let playersSockets = []
+let playersInfos = []
 let turn = 0;
 let tossCounter = 0;
 let timer;
+let waitingRoomQueue = [];
+let roomsState = [{
+    name: "room1",
+    state: "INACTIVE",
+    timer: null
+},{
+    name: "room2",
+    state: "INACTIVE",
+    timer: null
+},{
+    name: "room3",
+    state: "INACTIVE",
+    timer: null
+},{
+    name: "room4",
+    state: "INACTIVE",
+    timer: null
+},{
+    name: "room5",
+    state: "INACTIVE",
+    timer: null
+}]
 
 function endGame() {
     let list = []
-    for (let playerSocket of playersSockets) {
+    for (let playerSocket of playersInfos) {
         playerSocket.socket.emit("score", playerSocket.score)
         list.push({
             name: playerSocket.name,
@@ -27,44 +49,62 @@ function endGame() {
     list.sort(compareFn)
     io.to("playersRoom").emit("results", list)
     setTimeout(() => {
-        for (let playersSocket of playersSockets) {
+        for (let playersSocket of playersInfos) {
             playersSocket.socket.disconnect()
         }
-        playersSockets = []
+        playersInfos = []
         turn = 0
     }, 5000)
 }
 
-function startTimer() {
+function startTimer(roomName) {
     let remainingTime = 30
     timer = setInterval(() => {
-        io.to("playersRoom").emit("timeLeft", remainingTime)
+        io.to(roomName).emit("timeLeft", remainingTime)
         remainingTime--;
         if (remainingTime === -1) {
             clearInterval(timer)
-            processToss()
+            processToss(roomName)
         }
     }, 1000)
+    for (let roomsStateElement of roomsState) {
+        if (roomsStateElement.name === roomName){
+            roomsStateElement.timer = timer
+        }
+    }
 }
 
-function openConnections() {
-    startTimer()
-    for (let playerSocket of playersSockets) {
+function getPlayersFromRoomName(roomName) {
+    return playersInfos.filter((playerInfo) => {
+        return playerInfo.room === roomName
+    })
+}
+
+function openConnections(roomName) {
+    io.to(roomName).emit("startGame")
+    startTimer(roomName)
+    let playersInRoom = getPlayersFromRoomName(roomName)
+    for (let playerSocket of playersInRoom) {
         playerSocket.socket.on("bet", (data) => {
             if (playerSocket.toss === undefined){
                 playerSocket["bet"] = data.bet
                 playerSocket["toss"] = data.toss
                 tossCounter++
-                if (tossCounter === 3) processToss()
+                if (tossCounter === 3) processToss(roomName)
             }
         })
     }
 }
 
-function processToss(){
-    clearInterval(timer)
+function processToss(roomName){
+    for (let roomsStateElement of roomsState) {
+        if (roomsStateElement.name === roomName){
+            clearInterval(roomsStateElement.timer)
+        }
+    }
     let toss = Math.round(Math.random());
-    for (let playerSocket of playersSockets) {
+    let playersInRoom = getPlayersFromRoomName(roomName)
+    for (let playerSocket of playersInRoom) {
         if (playerSocket.toss && playerSocket.bet) {
             if (parseInt(playerSocket.toss) === toss) {
                 playerSocket.score += 10;
@@ -76,11 +116,11 @@ function processToss(){
             delete playerSocket.toss;
         }
     }
-    sendPlayersListAndScore();
+    sendPlayersListAndScore(roomName);
     tossCounter = 0;
     turn++;
-    if (turn === 3) endGame()
-    else startTimer()
+    if (turn === 3) endGame(roomName)
+    else startTimer(roomName)
 }
 
 function compareFn(a, b) {
@@ -88,9 +128,10 @@ function compareFn(a, b) {
 }
 
 
-function sendPlayersListAndScore() {
+function sendPlayersListAndScore(roomName) {
+    let playersInRoom = getPlayersFromRoomName(roomName)
     let list = []
-    for (let playerSocket of playersSockets) {
+    for (let playerSocket of playersInRoom) {
         playerSocket.socket.emit("score", playerSocket.score)
         list.push({
             name: playerSocket.name,
@@ -98,45 +139,74 @@ function sendPlayersListAndScore() {
         })
     }
     list.sort(compareFn)
-    io.to("playersRoom").emit("players", list)
+    io.to(roomName).emit("players", list)
+}
+
+function getPlayersInfosFromSocket(socket) {
+    return playersInfos.find((playerInfo) => playerInfo.socket.id === socket.id)
+}
+
+
+function createNewRoom() {
+    let roomName = findAvailableRoomName()
+    if (roomName !== null) {
+        for (let index = 0; index < 3; index++) {
+            let playerInfo = getPlayersInfosFromSocket(waitingRoomQueue.shift())
+            playerInfo.room = roomName
+        }
+        openConnections(roomName)
+    } else{
+        setTimeout(createNewRoom, 2000)
+    }
+}
+
+
+function findAvailableRoomName() {
+    for (let roomsStateElement of roomsState) {
+        if (roomsStateElement.state === "INACTIVE") return roomsStateElement.name
+    }
+    return null;
 }
 
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
 
-    if (playersSockets.length < 2){
+    if (playersInfos.length < 2){
         socket.join("playersRoom")
         socket.on("changeName", (name)=> {
-            console.log("Nb players : " + playersSockets.length)
-            let playerName = name ? name : "Player " + (playersSockets.length + 1)
-            playersSockets.push({
+            console.log("Nb players : " + playersInfos.length)
+            let playerName = name ? name : "Player " + (playersInfos.length + 1)
+            playersInfos.push({
                 socket: socket,
                 name: playerName,
-                score: 100
+                score: 100,
+                room: "waitingRoom"
             })
-            sendPlayersListAndScore()
-            if (playersSockets.length === 3){
-                openConnections()
-            }
-
+            socket.on('joinGame', () => {
+                waitingRoomQueue.push(socket.id)
+                if (waitingRoomQueue.length === 3){
+                    createNewRoom()
+                }
+            })
         })
         socket.on('disconnect', () => {
             let newPlayers = []
-            for (let playersSocket of playersSockets) {
+            for (let playersSocket of playersInfos) {
                 if (playersSocket.socket.id !== socket.id){
                     newPlayers.push(playersSocket)
                 }else {
                     console.log('user disconnected : ' + playersSocket.name);
                 }
             }
-            playersSockets = newPlayers
+            playersInfos = newPlayers
         });
         socket.on('message', (message) => {
-            io.to("playersRoom").emit("message", {
+            io.to(getPlayersInfosFromSocket(socket).room).emit("message", {
                 emitter: message.name,
                 content: message.text
             })
         })
+
     } else {
         socket.emit("connectionRefused")
     }
