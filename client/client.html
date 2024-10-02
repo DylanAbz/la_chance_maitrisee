@@ -44,6 +44,7 @@
 <div id="player-info">
     <p id="player-name"></p>
     <p id="player-score"></p>
+    <ul id="player-list"></ul> <!-- Balise pour afficher la liste des joueurs -->
 </div>
 
 <div id="game">
@@ -70,7 +71,6 @@
 <div id="result"></div>
 
 <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
-<script src="../server/server.js"></script>
 <script>
     const socket = io('http://localhost:3000');
     let playerName = '';
@@ -101,12 +101,12 @@
     });
 
     document.getElementById('chatform').addEventListener('submit', (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
     console.log("Message envoyé");
     const messageInput = document.getElementById('message');
     const messageText = messageInput.value.trim();
     if (messageText) {
-        socket.emit('message', messageText); 
+        socket.emit('message', messageText);
         messageInput.value = '';
     }
 });
@@ -123,6 +123,19 @@ socket.on('message', (data) => {
     listemessagesDiv.scrollTop = listemessagesDiv.scrollHeight;
 });
 
+    socket.on('players', (players) => {
+        console.log("Receiving players: ", players);  // Vérifie bien que les joueurs sont reçus
+
+        // Si tu veux afficher les joueurs dans un élément HTML
+        let playerListElement = document.getElementById('player-list');  // Assure-toi que cet élément existe
+        playerListElement.innerHTML = '';  // Vide la liste avant de la remplir
+
+        players.forEach(player => {
+            let playerItem = document.createElement('li');
+            playerItem.textContent = `${player.name} - Score: ${player.score}`;
+            playerListElement.appendChild(playerItem);
+        });
+    });
 
     socket.on('connect', () => {
         console.log('connected');

@@ -1,27 +1,18 @@
 import { Server } from 'socket.io';
 import express from 'express';
 import http from 'http';
-import { log } from 'console';
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: ['http://localhost:63342', 'http://localhost'],
     }
 });
 
 let playersSockets = []
 let turn = 0;
-
-function startTurn() {
-    if (turn < 3) {
-        openConnections()
-        turn++
-    } else {
-        endGame()
-    }
-}
+let tossCounter = 0;
 
 function endGame() {
     for (let playersSocket of playersSockets) {
@@ -32,10 +23,8 @@ function endGame() {
 }
 
 function openConnections() {
-    let tossCounter = 0
     for (let playerSocket of playersSockets) {
         playerSocket.socket.on("bet", (data) => {
-            console.log("Open connections");
             if (playerSocket.toss === undefined){
                 playerSocket["bet"] = data.bet
                 playerSocket["toss"] = data.toss
@@ -47,17 +36,21 @@ function openConnections() {
 }
 
 function processToss(){
-    let toss = Math.round(Math.random())
+    let toss = Math.round(Math.random());
     for (let playerSocket of playersSockets) {
         if (playerSocket.toss === toss) {
-            playerSocket.score += 10
-            playerSocket.score += playerSocket.bet
+            playerSocket.score += 10;
+            playerSocket.score += playerSocket.bet;
         }else {
-            playerSocket.score -= playerSocket.bet
+            playerSocket.score -= playerSocket.bet;
         }
-        delete playerSocket.bet
-        delete playerSocket.toss
+        delete playerSocket.bet;
+        delete playerSocket.toss;
     }
+    sendPlayersListAndScore();
+    tossCounter = 0;
+    turn++;
+    if (turn === 3) endGame()
 }
 
 function sendPlayersListAndScore() {
@@ -71,15 +64,13 @@ function sendPlayersListAndScore() {
     io.to("playersRoom").emit("players", list)
 }
 
-
-
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
 
     if (playersSockets.length < 3){
         socket.join("playersRoom")
         socket.on("changeName", (name)=> {
-            console.log(name)
+            console.log("Nb players : " + playersSockets.length)
             let playerName = name ? name : "Player " + (playersSockets.length + 1)
             playersSockets.push({
                 socket: socket,
@@ -88,7 +79,7 @@ io.on('connection', (socket) => {
             })
             sendPlayersListAndScore()
             if (playersSockets.length === 3){
-                startTurn()
+                openConnections()
             }
         })
         socket.on('disconnect', () => {
@@ -102,12 +93,12 @@ io.on('connection', (socket) => {
             }
             playersSockets = newPlayers
         });
-
-        socket.on('message', (msg) => {
-            const playerName = players[socket.id];
-            io.emit('message', { emitter: playerName, content: msg });
-          });
-
+        socket.on('message', (message) => {
+            socket.broadcast.emit("message", {
+                emitter: playerName,
+                content: message
+            })
+        })
     } else {
         socket.emit("connectionRefused")
     }
