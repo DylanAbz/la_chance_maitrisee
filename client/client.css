@@ -6,6 +6,43 @@ body {
     color: #333;
 }
 
+/* Style général de la barre de progression */
+progress {
+    appearance: none; /* Enlever le style par défaut */
+    -webkit-appearance: none;
+    width: 100%; /* Largeur de la barre */
+    height: 10px; /* Hauteur de la barre */
+    border-radius: 10px; /* Coins arrondis */
+    background-color: #f3f3f3; /* Couleur de l'arrière-plan de la barre */
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2); /* Légère ombre intérieure */
+    overflow: hidden; /* Empêche le débordement du contenu arrondi */
+}
+
+/* Couleur de la partie remplie pour les navigateurs modernes */
+progress::-webkit-progress-value {
+    background-color: red; /* Couleur remplie en rouge */
+    border-radius: 10px; /* Coins arrondis pour le contenu */
+}
+
+/* Style pour l'arrière-plan de la barre dans Chrome/Opera/Safari */
+progress::-webkit-progress-bar {
+    background-color: #f3f3f3; /* Couleur de fond de la barre non remplie */
+    border-radius: 10px;
+}
+
+/* Style pour Firefox */
+progress::-moz-progress-bar {
+    background-color: red; /* Couleur remplie en rouge */
+    border-radius: 10px;
+}
+
+/* Style pour IE */
+progress::-ms-fill {
+    background-color: red; /* Couleur remplie en rouge */
+    border-radius: 10px;
+}
+
+
 h1 {
     text-align: center;
     color: #4CAF50;

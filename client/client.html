@@ -39,6 +39,10 @@
         </select>
         <button type="submit">Envoyer</button>
     </form>
+    <div class="time-left-div">
+        <label for="remaining-time">Temps restant</label>
+        <progress id="remaining-time" max="30" value="30"></progress>
+    </div>
 </div>
 
 <div id="chat">
@@ -97,8 +101,7 @@
     });
 
     socket.on("score", (score) => {
-        console.log(score)
-        document.querySelector("#player-score").textContent = score
+        document.querySelector("#player-score").textContent = `Votre score : ${score}`
         document.querySelector("#bet").max = score
     })
 
@@ -135,17 +138,17 @@
 
 
     socket.on('results', (ranking) => {
-    console.log("Classement final reçu :", ranking); 
-    
-    let rankingElement = document.getElementById('ranking');
-    rankingElement.innerHTML = ''; 
+        console.log("Classement final reçu :", ranking);
 
-    ranking.forEach((player, index) => {
-        let playerItem = document.createElement('li');
-        playerItem.textContent = `${index + 1}. ${player.name} - Score: ${player.score}`;
-        rankingElement.appendChild(playerItem);
+        let rankingElement = document.getElementById('ranking');
+        rankingElement.innerHTML = '';
+
+        ranking.forEach((player, index) => {
+            let playerItem = document.createElement('li');
+            playerItem.textContent = `${index + 1}. ${player.name} - Score: ${player.score}`;
+            rankingElement.appendChild(playerItem);
+        });
     });
-});
 
 
     socket.on('connect', () => {
@@ -156,10 +159,16 @@
         document.getElementById('player-name').textContent = ``;
         document.getElementById('game').style.display = 'none';
         document.getElementById('chat').style.display = 'none';
+        document.getElementById('player-info').style.display = 'none';
         document.getElementById('formulaire').style.display = 'block';
         let playerListElement = document.getElementById('player-list');
         playerListElement.innerHTML = '';
         document.querySelector("#player-score").textContent = ""
+    })
+
+    socket.on("timeLeft", (timeLeft) => {
+        document.querySelector("#remaining-time").value = timeLeft
+        document.querySelector(".time-left-div").display = 'block'
     })
 </script>
 </body>

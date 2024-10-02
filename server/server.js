@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:63342', 'http://localhost'],
+        origin: "*",
     }
 });
 
@@ -32,15 +32,15 @@ function endGame() {
         }
         playersSockets = []
         turn = 0
-    }, 10000)
+    }, 5000)
 }
 
 function startTimer() {
-    let remainingTime = 10
+    let remainingTime = 30
     timer = setInterval(() => {
         io.to("playersRoom").emit("timeLeft", remainingTime)
         remainingTime--;
-        if (remainingTime === 0) {
+        if (remainingTime === -1) {
             clearInterval(timer)
             processToss()
         }
@@ -48,8 +48,8 @@ function startTimer() {
 }
 
 function openConnections() {
+    startTimer()
     for (let playerSocket of playersSockets) {
-
         playerSocket.socket.on("bet", (data) => {
             if (playerSocket.toss === undefined){
                 playerSocket["bet"] = data.bet
@@ -104,7 +104,7 @@ function sendPlayersListAndScore() {
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
 
-    if (playersSockets.length < 3){
+    if (playersSockets.length < 2){
         socket.join("playersRoom")
         socket.on("changeName", (name)=> {
             console.log("Nb players : " + playersSockets.length)
