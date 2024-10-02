@@ -172,48 +172,41 @@ function findAvailableRoomName() {
 
 io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
-
-    if (playersInfos.length < 2){
-        socket.join("playersRoom")
-        socket.on("changeName", (name)=> {
-            console.log("Nb players : " + playersInfos.length)
-            let playerName = name ? name : "Player " + (playersInfos.length + 1)
-            playersInfos.push({
-                socket: socket,
-                name: playerName,
-                score: 100,
-                room: "waitingRoom"
-            })
-            socket.join("waitingRoom")
-            socket.on('joinGame', () => {
-                waitingRoomQueue.push(socket.id)
-                if (waitingRoomQueue.length === 3){
-                    createNewRoom()
-                }
-            })
+    socket.on("changeName", (name)=> {
+        console.log("Nb players : " + playersInfos.length)
+        let playerName = name ? name : "Player " + (playersInfos.length + 1)
+        playersInfos.push({
+            socket: socket,
+            name: playerName,
+            score: 100,
+            room: "waitingRoom"
         })
-        socket.on('disconnect', () => {
-            let newPlayers = []
-            for (let playersSocket of playersInfos) {
-                if (playersSocket.socket.id !== socket.id){
-                    newPlayers.push(playersSocket)
-                }else {
-                    console.log('user disconnected : ' + playersSocket.name);
-                }
+        socket.join("waitingRoom")
+        socket.on('joinGame', () => {
+            waitingRoomQueue.push(socket.id)
+            if (waitingRoomQueue.length === 3){
+                createNewRoom()
             }
-            playersInfos = newPlayers
-        });
-        socket.on('message', (message) => {
-            console.log(getPlayersInfosFromSocket(socket).room)
-            io.to(getPlayersInfosFromSocket(socket).room.toString()).emit("message", {
-                emitter: message.name,
-                content: message.text
-            })
         })
-
-    } else {
-        socket.emit("connectionRefused")
-    }
+    })
+    socket.on('disconnect', () => {
+        let newPlayers = []
+        for (let playersSocket of playersInfos) {
+            if (playersSocket.socket.id !== socket.id){
+                newPlayers.push(playersSocket)
+            }else {
+                console.log('user disconnected : ' + playersSocket.name);
+            }
+        }
+        playersInfos = newPlayers
+    });
+    socket.on('message', (message) => {
+        console.log(getPlayersInfosFromSocket(socket).room)
+        io.to(getPlayersInfosFromSocket(socket).room.toString()).emit("message", {
+            emitter: message.name,
+            content: message.text
+        })
+    })
 });
 
 server.listen(3000, () => {
