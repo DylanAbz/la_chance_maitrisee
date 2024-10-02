@@ -71,7 +71,6 @@
 
         if (playerName) {
             document.getElementById('player-name').textContent = `Joueur : ${playerName}`;
-            document.getElementById('game').style.display = 'block';
             document.getElementById('chat').style.display = 'block';
             document.getElementById('formulaire').style.display = 'none';
 
@@ -98,6 +97,12 @@
             });
             messageInput.value = '';
         }
+    });
+
+    document.getElementById('joinbutton').addEventListener('onclick', (e) => {
+        e.preventDefault();
+        console.log("Rejoint la partie");
+        document.getElementById('game').style.display = 'block';        
     });
 
     socket.on("score", (score) => {
@@ -157,6 +162,7 @@
 
     socket.on("disconnect", () => {
         document.getElementById('player-name').textContent = ``;
+        document.getElementById('joingame').style.display = 'none';
         document.getElementById('game').style.display = 'none';
         document.getElementById('chat').style.display = 'none';
         document.getElementById('player-info').style.display = 'none';
