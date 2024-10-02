@@ -57,7 +57,7 @@ function endGame(roomName) {
         })
     }
     list.sort(compareFn)
-    io.to("playersRoom").emit("results", list)
+    io.to(roomName).emit("results", list)
     setTimeout(() => {
         let newPlayerList = []
         for (let player of playersInfos) {
@@ -73,7 +73,7 @@ function endGame(roomName) {
 }
 
 function startTimer(roomName) {
-    let remainingTime = 30
+    let remainingTime = 1
     let timer = setInterval(() => {
         io.to(roomName).emit("timeLeft", remainingTime)
         remainingTime--;

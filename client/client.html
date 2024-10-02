@@ -27,8 +27,9 @@
     </div>
 
     <div id="joingame">
-        <h3>Une partie est disponible !</h3>
+        <h3 id="jointitle">Une partie est disponible !</h3>
         <button id="joinbutton">Rejoindre la partie</button>
+        <p class="waiting-message">En attente de joueurs...</p>
     </div>
 
     <div id="game">
@@ -68,13 +69,16 @@
         let playerName = '';
         document.getElementById('chat').style.display = 'none';
         document.getElementById('game').style.display = 'none';
-        document.getElementById('joingame').style.display = 'none';
         document.getElementById('result').style.display = 'none';
+        document.getElementById('joingame').style.display = 'none';
+        document.getElementById('player-info').style.display = 'none';
+        document.querySelector(".waiting-message").style.display = 'none';
 
         document.getElementById('pseudoform').addEventListener('submit', (e) => {
             e.preventDefault();
+            document.getElementById('player-info').style.display = 'block';
             playerName = document.getElementById('pseudo').value.trim();
-
+            document.getElementById('result').style.display = 'none';
             if (playerName) {
                 document.getElementById('player-name').textContent = `Joueur : ${playerName}`;
                 document.getElementById('chat').style.display = 'block';
@@ -111,10 +115,12 @@
 
             socket.emit('joinGame');
 
-            document.getElementById('joingame').innerHTML = '<p>En attente de joueurs...</p>';
+            document.querySelector(".waiting-message").style.display = 'block';
+            document.getElementById('joinbutton').style.display = 'none';
+            document.getElementById('jointitle').style.display = 'none';
         });
 
-        
+
         socket.on('startGame', () => {
             console.log("Partie prête, démarrage du jeu");
             document.getElementById('game').style.display = 'block';
@@ -155,6 +161,7 @@
         socket.on('results', (ranking) => {
             console.log("Classement final reçu :", ranking);
 
+            document.getElementById('result').style.display = 'block';
             let rankingElement = document.getElementById('ranking');
             rankingElement.innerHTML = '';
 
@@ -177,6 +184,9 @@
             document.getElementById('chat').style.display = 'none';
             document.getElementById('player-info').style.display = 'none';
             document.getElementById('formulaire').style.display = 'block';
+            document.querySelector(".waiting-message").style.display = 'none';
+            document.getElementById('joinbutton').style.display = 'block';
+            document.getElementById('jointitle').style.display = 'block';
             let playerListElement = document.getElementById('player-list');
             playerListElement.innerHTML = '';
             document.querySelector("#player-score").textContent = ""
