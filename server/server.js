@@ -38,9 +38,9 @@ function openConnections() {
 function processToss(){
     let toss = Math.round(Math.random());
     for (let playerSocket of playersSockets) {
-        if (playerSocket.toss === toss) {
+        if (parseInt(playerSocket.toss) === toss) {
             playerSocket.score += 10;
-            playerSocket.score += playerSocket.bet;
+            playerSocket.score += parseInt(playerSocket.bet);
         }else {
             playerSocket.score -= playerSocket.bet;
         }
