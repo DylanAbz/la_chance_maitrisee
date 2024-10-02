@@ -142,16 +142,17 @@ function sendPlayersListAndScore(roomName) {
     io.to(roomName).emit("players", list)
 }
 
-function getPlayersInfosFromSocket(socket) {
-    return playersInfos.find((playerInfo) => playerInfo.socket.id === socket.id)
+function getPlayersInfosFromSocket(socketId) {
+    return playersInfos.find((playerInfo) => playerInfo.socket.id === socketId)
 }
-
 
 function createNewRoom() {
     let roomName = findAvailableRoomName()
     if (roomName !== null) {
         for (let index = 0; index < 3; index++) {
             let playerInfo = getPlayersInfosFromSocket(waitingRoomQueue.shift())
+            console.log(playerInfo)
+            console.log(roomName)
             playerInfo.room = roomName
             playerInfo.socket.leave("waitingRoom")
             playerInfo.socket.join(roomName)
@@ -201,8 +202,8 @@ io.on('connection', (socket) => {
         playersInfos = newPlayers
     });
     socket.on('message', (message) => {
-        console.log(getPlayersInfosFromSocket(socket).room)
-        io.to(getPlayersInfosFromSocket(socket).room.toString()).emit("message", {
+        console.log(getPlayersInfosFromSocket(socket.id).room)
+        io.to(getPlayersInfosFromSocket(socket.id).room.toString()).emit("message", {
             emitter: message.name,
             content: message.text
         })
