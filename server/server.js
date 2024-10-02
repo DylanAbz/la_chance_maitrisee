@@ -11,33 +11,43 @@ const io = new Server(server, {
 });
 
 let playersInfos = []
-let turn = 0;
 let tossCounter = 0;
-let timer;
 let waitingRoomQueue = [];
 let roomsState = [{
     name: "room1",
     state: "INACTIVE",
-    timer: null
+    timer: null,
+    turn: 0
 },{
     name: "room2",
     state: "INACTIVE",
-    timer: null
+    timer: null,
+    turn: 0
 },{
     name: "room3",
     state: "INACTIVE",
-    timer: null
+    timer: null,
+    turn: 0
 },{
     name: "room4",
     state: "INACTIVE",
-    timer: null
+    timer: null,
+    turn: 0
 },{
     name: "room5",
     state: "INACTIVE",
-    timer: null
+    timer: null,
+    turn: 0
 }]
 
-function endGame() {
+function resetRoom(roomName) {
+    let roomInfo = getRoomInfoFromName(roomName)
+    roomInfo.state = "INACTIVE"
+    roomInfo.turn = 0
+    roomInfo.timer = null
+}
+
+function endGame(roomName) {
     let list = []
     for (let playerSocket of playersInfos) {
         playerSocket.socket.emit("score", playerSocket.score)
@@ -49,17 +59,22 @@ function endGame() {
     list.sort(compareFn)
     io.to("playersRoom").emit("results", list)
     setTimeout(() => {
-        for (let playersSocket of playersInfos) {
-            playersSocket.socket.disconnect()
+        let newPlayerList = []
+        for (let player of playersInfos) {
+            if (player.room === roomName) {
+                player.socket.disconnect()
+            }else{
+                newPlayerList.push(player)
+            }
         }
-        playersInfos = []
-        turn = 0
+        playersInfos = newPlayerList
+        resetRoom(roomName);
     }, 5000)
 }
 
 function startTimer(roomName) {
     let remainingTime = 30
-    timer = setInterval(() => {
+    let timer = setInterval(() => {
         io.to(roomName).emit("timeLeft", remainingTime)
         remainingTime--;
         if (remainingTime === -1) {
@@ -118,8 +133,10 @@ function processToss(roomName){
     }
     sendPlayersListAndScore(roomName);
     tossCounter = 0;
-    turn++;
-    if (turn === 3) endGame(roomName)
+    console.log(getRoomInfoFromName(roomName))
+    getRoomInfoFromName(roomName).turn+= 1;
+    console.log(getRoomInfoFromName(roomName))
+    if (getRoomInfoFromName(roomName).turn === 3) endGame(roomName)
     else startTimer(roomName)
 }
 
@@ -151,18 +168,22 @@ function createNewRoom() {
     if (roomName !== null) {
         for (let index = 0; index < 3; index++) {
             let playerInfo = getPlayersInfosFromSocket(waitingRoomQueue.shift())
-            console.log(playerInfo)
-            console.log(roomName)
             playerInfo.room = roomName
             playerInfo.socket.leave("waitingRoom")
             playerInfo.socket.join(roomName)
         }
+        getRoomInfoFromName(roomName).state = "ACTIVE"
+        sendPlayersListAndScore(roomName);
         openConnections(roomName)
     } else{
         setTimeout(createNewRoom, 2000)
     }
 }
 
+
+function getRoomInfoFromName (roomName) {
+    return roomsState.find((roomInfo) => roomInfo.name === roomName)
+}
 
 function findAvailableRoomName() {
     for (let roomsStateElement of roomsState) {

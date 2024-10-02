@@ -115,8 +115,7 @@
         });
 
         
-        socket.on('startGame', (e) => {
-            e.preventDefault();
+        socket.on('startGame', () => {
             console.log("Partie prête, démarrage du jeu");
             document.getElementById('game').style.display = 'block';
             document.getElementById('joingame').style.display = 'none';
