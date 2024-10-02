@@ -13,6 +13,7 @@ const io = new Server(server, {
 let playersSockets = []
 let turn = 0;
 let tossCounter = 0;
+let timer;
 
 function endGame() {
     let list = []
@@ -31,11 +32,24 @@ function endGame() {
         }
         playersSockets = []
         turn = 0
-    }, 3000)
+    }, 10000)
+}
+
+function startTimer() {
+    let remainingTime = 10
+    timer = setInterval(() => {
+        io.to("playersRoom").emit("timeLeft", remainingTime)
+        remainingTime--;
+        if (remainingTime === 0) {
+            clearInterval(timer)
+            processToss()
+        }
+    }, 1000)
 }
 
 function openConnections() {
     for (let playerSocket of playersSockets) {
+
         playerSocket.socket.on("bet", (data) => {
             if (playerSocket.toss === undefined){
                 playerSocket["bet"] = data.bet
@@ -48,21 +62,25 @@ function openConnections() {
 }
 
 function processToss(){
+    clearInterval(timer)
     let toss = Math.round(Math.random());
     for (let playerSocket of playersSockets) {
-        if (parseInt(playerSocket.toss) === toss) {
-            playerSocket.score += 10;
-            playerSocket.score += parseInt(playerSocket.bet);
-        }else {
-            playerSocket.score -= playerSocket.bet;
+        if (playerSocket.toss && playerSocket.bet) {
+            if (parseInt(playerSocket.toss) === toss) {
+                playerSocket.score += 10;
+                playerSocket.score += parseInt(playerSocket.bet);
+            } else {
+                playerSocket.score -= playerSocket.bet;
+            }
+            delete playerSocket.bet;
+            delete playerSocket.toss;
         }
-        delete playerSocket.bet;
-        delete playerSocket.toss;
     }
     sendPlayersListAndScore();
     tossCounter = 0;
     turn++;
     if (turn === 3) endGame()
+    else startTimer()
 }
 
 function compareFn(a, b) {

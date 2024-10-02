@@ -33,6 +33,10 @@
             <option value="1">Face</option>
         </select>
         <button type="submit">Envoyer</button>
+        <div class="time-left-div">
+            <label for="remaining-time">Temps restant</label>
+            <progress id="remaining-time" max="30" value="30"></progress>
+        </div>
     </form>
 </div>
 
@@ -92,8 +96,7 @@
     });
 
     socket.on("score", (score) => {
-        console.log(score)
-        document.querySelector("#player-score").textContent = score
+        document.querySelector("#player-score").textContent = `Votre score : ${score}`
         document.querySelector("#bet").max = score
     })
 
@@ -109,11 +112,8 @@
     });
 
     socket.on('players', (players) => {
-        console.log("Receiving players: ", players);  // Vérifie bien que les joueurs sont reçus
-
-        // Si tu veux afficher les joueurs dans un élément HTML
-        let playerListElement = document.getElementById('player-list');  // Assure-toi que cet élément existe
-        playerListElement.innerHTML = '';  // Vide la liste avant de la remplir
+        let playerListElement = document.getElementById('player-list');
+        playerListElement.innerHTML = '';
 
         players.forEach(player => {
             let playerItem = document.createElement('li');
@@ -144,10 +144,16 @@
         document.getElementById('player-name').textContent = ``;
         document.getElementById('game').style.display = 'none';
         document.getElementById('chat').style.display = 'none';
+        document.getElementById('player-info').style.display = 'none';
         document.getElementById('formulaire').style.display = 'block';
         let playerListElement = document.getElementById('player-list');
         playerListElement.innerHTML = '';
         document.querySelector("#player-score").textContent = ""
+    })
+
+    socket.on("timeLeft", (time) => {
+        document.querySelector("#remaining-time").value = time
+        document.querySelector(".time-left-div").display = 'block'
     })
 </script>
 </body>
