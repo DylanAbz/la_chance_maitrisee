@@ -50,9 +50,9 @@
     <form id="betform">
         <label id="bet">Votre mise :</label>
         <input type="number" id="bet" required>
-        <select>
-            <option id="zero">0</option>
-            <option id="un">1</option>
+        <select id="toss">
+            <option value="0">Pile</option>
+            <option value="1">Face</option>
         </select>
     <button type="submit">Envoyer</button>
     </form>
@@ -89,12 +89,10 @@
         }
     });
 
-    document.getElementById('zero').addEventListener('click', () => {
-        socket.emit('bet', { player: playerName, bet: 10, toss: 0 }); e
-    });
-
-    document.getElementById('un').addEventListener('click', () => {
-        socket.emit('bet', { player: playerName, bet: 10, toss: 1 });
+    document.getElementById('betform').addEventListener('submit', () => {
+        let bet = document.getElementById('bet').value;
+        let toss = document.getElementById('toss').value;
+        socket.emit('bet', { bet: bet, toss: toss });
     });
 
     socket.on('result', (data) => {
