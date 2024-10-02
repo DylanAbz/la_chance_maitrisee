@@ -53,14 +53,21 @@ function processToss(){
     if (turn === 3) endGame()
 }
 
+function compareFn(a, b) {
+    return b.score - a.score;
+}
+
+
 function sendPlayersListAndScore() {
     let list = []
     for (let playerSocket of playersSockets) {
+        playerSocket.socket.emit("score", playerSocket.score)
         list.push({
             name: playerSocket.name,
             score: playerSocket.score,
         })
     }
+    list.sort(compareFn)
     io.to("playersRoom").emit("players", list)
 }
 
@@ -81,6 +88,7 @@ io.on('connection', (socket) => {
             if (playersSockets.length === 3){
                 openConnections()
             }
+
         })
         socket.on('disconnect', () => {
             let newPlayers = []
@@ -94,9 +102,9 @@ io.on('connection', (socket) => {
             playersSockets = newPlayers
         });
         socket.on('message', (message) => {
-            socket.broadcast.emit("message", {
-                emitter: playerName,
-                content: message
+            io.to("playersRoom").emit("message", {
+                emitter: message.name,
+                content: message.text
             })
         })
     } else {

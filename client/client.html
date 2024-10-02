@@ -81,9 +81,9 @@
 
         if (playerName) {
             document.getElementById('player-name').textContent = `Joueur : ${playerName}`;
-            document.getElementById('game').style.display = 'block';  
-            document.getElementById('chat').style.display = 'block';  
-            document.getElementById('formulaire').style.display = 'none';  
+            document.getElementById('game').style.display = 'block';
+            document.getElementById('chat').style.display = 'block';
+            document.getElementById('formulaire').style.display = 'none';
 
             socket.emit('changeName', playerName);
         }
@@ -93,7 +93,7 @@
         e.preventDefault();
         let bet = document.getElementById('bet').value;
         let toss = document.getElementById('toss').value;
-        socket.emit('bet', { bet: bet, toss: toss });
+        socket.emit('bet', {bet: bet, toss: toss});
     });
 
     socket.on('result', (data) => {
@@ -101,27 +101,36 @@
     });
 
     document.getElementById('chatform').addEventListener('submit', (e) => {
-    e.preventDefault();
-    console.log("Message envoyé");
-    const messageInput = document.getElementById('message');
-    const messageText = messageInput.value.trim();
-    if (messageText) {
-        socket.emit('message', messageText);
-        messageInput.value = '';
-    }
-});
+        e.preventDefault();
+        console.log("Message envoyé");
+        const messageInput = document.getElementById('message');
+        const messageText = messageInput.value.trim();
+        if (messageText) {
+            socket.emit('message', {
+                text: messageText,
+                name: playerName
+            });
+            messageInput.value = '';
+        }
+    });
+
+    socket.on("score", (score) => {
+        console.log(score)
+        document.querySelector("#player-score").textContent = score
+        document.querySelector("#bet").max = score
+    })
 
 
-socket.on('message', (data) => {
-    console.log('Message reçu du serveur : ', data);
-    const messageDiv = document.createElement('div');
-    messageDiv.textContent = `${data.emitter}: ${data.content}`;
+    socket.on('message', (data) => {
+        console.log('Message reçu du serveur : ', data);
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = `${data.emitter}: ${data.content}`;
 
-    document.getElementById('listemessages').appendChild(messageDiv);
+        document.getElementById('listemessages').appendChild(messageDiv);
 
-    const listemessagesDiv = document.getElementById('listemessages');
-    listemessagesDiv.scrollTop = listemessagesDiv.scrollHeight;
-});
+        const listemessagesDiv = document.getElementById('listemessages');
+        listemessagesDiv.scrollTop = listemessagesDiv.scrollHeight;
+    });
 
     socket.on('players', (players) => {
         console.log("Receiving players: ", players);  // Vérifie bien que les joueurs sont reçus
@@ -140,6 +149,14 @@ socket.on('message', (data) => {
     socket.on('connect', () => {
         console.log('connected');
     });
+
+    socket.on("disconnect", () => {
+        document.getElementById('player-name').textContent = ``;
+        document.getElementById('game').style.display = 'none';
+        document.getElementById('chat').style.display = 'none';
+        document.getElementById('formulaire').style.display = 'block';
+        playerListElement.innerHTML = '';
+    })
 </script>
 </body>
 </html>
