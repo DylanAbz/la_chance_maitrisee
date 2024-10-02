@@ -15,11 +15,23 @@ let turn = 0;
 let tossCounter = 0;
 
 function endGame() {
-    for (let playersSocket of playersSockets) {
-        playersSocket.socket.disconnect()
+    let list = []
+    for (let playerSocket of playersSockets) {
+        playerSocket.socket.emit("score", playerSocket.score)
+        list.push({
+            name: playerSocket.name,
+            score: playerSocket.score,
+        })
     }
-    playersSockets = []
-    turn = 0
+    list.sort(compareFn)
+    io.to("playersRoom").emit("results", list)
+    setTimeout(() => {
+        for (let playersSocket of playersSockets) {
+            playersSocket.socket.disconnect()
+        }
+        playersSockets = []
+        turn = 0
+    }, 3000)
 }
 
 function openConnections() {
