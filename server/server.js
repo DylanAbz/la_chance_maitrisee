@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: '*',
+        origin: ['http://localhost:63342', 'http://localhost'],
     }
 });
 
@@ -73,17 +73,19 @@ io.on('connection', (socket) => {
     console.log('a user connected', socket.id);
 
     if (playersSockets.length < 3){
-        let playerName = socket.playerName ? socket.playerName : "Player " + (playersSockets.length + 1)
-        playersSockets.push({
-            socket: socket,
-            name: playerName,
-            score: 100
-        })
         socket.join("playersRoom")
-        sendPlayersListAndScore()
-        if (playersSockets.length === 3){
-            startTurn()
-        }
+        socket.on("changeName", (name)=> {
+            let playerName = name ? name : "Player " + (playersSockets.length + 1)
+            playersSockets.push({
+                socket: socket,
+                name: playerName,
+                score: 100
+            })
+            sendPlayersListAndScore()
+            if (playersSockets.length === 3){
+                startTurn()
+            }
+        })
         socket.on('disconnect', () => {
             let newPlayers = []
             for (let playersSocket of playersSockets) {
