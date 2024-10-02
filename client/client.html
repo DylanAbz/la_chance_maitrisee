@@ -43,11 +43,19 @@
 
 <div id="player-info">
     <p id="player-name"></p>
+    <p id="player-score"></p>
 </div>
 
 <div id="game">
-    <button id="zero">0</button>
-    <button id="un">1</button>
+    <form id="betform">
+        <label id="bet">Votre mise :</label>
+        <input type="number" id="bet" required>
+        <select>
+            <option id="zero">0</option>
+            <option id="un">1</option>
+        </select>
+    <button type="submit">Envoyer</button>
+    </form>
 </div>
 
 <div id="chat">
@@ -62,6 +70,7 @@
 <div id="result"></div>
 
 <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+<script src="../server/server.js"></script>
 <script>
     const socket = io('http://localhost:3000');
     let playerName = '';
@@ -71,19 +80,21 @@
         playerName = document.getElementById('pseudo').value.trim();
 
         if (playerName) {
-            document.getElementById('player-name').textContent = `Pseudo: ${playerName}`;
-            document.getElementById('game').style.display = 'block';
+            document.getElementById('player-name').textContent = `Joueur : ${playerName}`;
+            document.getElementById('game').style.display = 'block';  
             document.getElementById('chat').style.display = 'block';  
-            document.getElementById('formulaire').style.display = 'none';
+            document.getElementById('formulaire').style.display = 'none';  
+
+            socket.emit('message', playerName + ' a rejoint le jeu');
         }
     });
 
     document.getElementById('zero').addEventListener('click', () => {
-        socket.emit('play', { player: playerName, choice: 0 });
+        socket.emit('bet', { player: playerName, bet: 10, toss: 0 }); e
     });
 
     document.getElementById('un').addEventListener('click', () => {
-        socket.emit('play', { player: playerName, choice: 1 });
+        socket.emit('bet', { player: playerName, bet: 10, toss: 1 });
     });
 
     socket.on('result', (data) => {
@@ -91,20 +102,20 @@
     });
 
     document.getElementById('chatform').addEventListener('submit', (e) => {
-        e.preventDefault();
+        e.preventDefault(); 
         const messageInput = document.getElementById('message');
         const messageText = messageInput.value.trim();
 
         if (messageText) {
-            socket.emit('chat message', { player: playerName, message: messageText });
+            socket.emit('message', messageText); 
 
             messageInput.value = '';
         }
     });
 
-    socket.on('chat message', (data) => {
+    socket.on('message', (data) => {
         const messageDiv = document.createElement('div');
-        messageDiv.textContent = `${data.player}: ${data.message}`;
+        messageDiv.textContent = `${data.emitter}: ${data.content}`; // Format du message
 
         document.getElementById('listemessages').appendChild(messageDiv);
 
