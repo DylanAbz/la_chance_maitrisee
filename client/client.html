@@ -109,15 +109,15 @@
             e.preventDefault();
             console.log("Rejoint la liste d'attente");
 
-            socket.emit('joinQueue', playerName);
+            socket.emit('joinGame');
 
             document.getElementById('joingame').innerHTML = '<p>En attente de joueurs...</p>';
         });
 
         
-        socket.on('gameReady', () => {
+        socket.on('startGame', (e) => {
+            e.preventDefault();
             console.log("Partie prête, démarrage du jeu");
-
             document.getElementById('game').style.display = 'block';
             document.getElementById('joingame').style.display = 'none';
         });
