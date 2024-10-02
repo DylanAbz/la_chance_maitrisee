@@ -24,6 +24,11 @@
     <ul id="player-list"></ul> <!-- Balise pour afficher la liste des joueurs -->
 </div>
 
+<div id="joingame">
+    <h3>Une partie est disponible !</h3>
+    <button id="joinbutton">Rejoindre la partie</button>
+</div>
+
 <div id="game">
     <form id="betform">
         <label>Votre mise :</label>
@@ -33,10 +38,6 @@
             <option value="1">Face</option>
         </select>
         <button type="submit">Envoyer</button>
-        <div class="time-left-div">
-            <label for="remaining-time">Temps restant</label>
-            <progress id="remaining-time" max="30" value="30"></progress>
-        </div>
     </form>
 </div>
 
@@ -96,7 +97,8 @@
     });
 
     socket.on("score", (score) => {
-        document.querySelector("#player-score").textContent = `Votre score : ${score}`
+        console.log(score)
+        document.querySelector("#player-score").textContent = score
         document.querySelector("#bet").max = score
     })
 
@@ -112,15 +114,25 @@
     });
 
     socket.on('players', (players) => {
-        let playerListElement = document.getElementById('player-list');
-        playerListElement.innerHTML = '';
+    console.log("Receiving players: ", players);  // Vérifie bien que les joueurs sont reçus
 
-        players.forEach(player => {
-            let playerItem = document.createElement('li');
-            playerItem.textContent = `${player.name} - Score: ${player.score}`;
-            playerListElement.appendChild(playerItem);
-        });
+    let playerListElement = document.getElementById('player-list');
+    playerListElement.innerHTML = '';  // Vide la liste avant de la remplir
+
+    players.forEach(player => {
+        let playerItem = document.createElement('li');
+        playerItem.textContent = `${player.name} - Score: ${player.score}`;
+        playerListElement.appendChild(playerItem);
     });
+
+    // Afficher la div joingame si le nombre de joueurs est égal à 3
+    if (players.length === 3) {
+        document.getElementById('joingame').style.display = 'block';
+    } else {
+        document.getElementById('joingame').style.display = 'none';
+    }
+});
+
 
     socket.on('results', (ranking) => {
     console.log("Classement final reçu :", ranking); 
@@ -144,16 +156,10 @@
         document.getElementById('player-name').textContent = ``;
         document.getElementById('game').style.display = 'none';
         document.getElementById('chat').style.display = 'none';
-        document.getElementById('player-info').style.display = 'none';
         document.getElementById('formulaire').style.display = 'block';
         let playerListElement = document.getElementById('player-list');
         playerListElement.innerHTML = '';
         document.querySelector("#player-score").textContent = ""
-    })
-
-    socket.on("timeLeft", (time) => {
-        document.querySelector("#remaining-time").value = time
-        document.querySelector(".time-left-div").display = 'block'
     })
 </script>
 </body>

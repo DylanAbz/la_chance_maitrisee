@@ -39,7 +39,7 @@ button:hover {
     background-color: #45a049;
 }
 
-#player-info, #result, #game, #chat {
+#player-info, #result, #game, #chat, #joingame {
     margin: 20px auto;
     width: 80%;
     max-width: 600px;
@@ -72,4 +72,8 @@ ul li {
     text-align: center;
     color: #4CAF50;
     font-size: 24px;
+}
+
+#joingame {
+    display: none;
 }
