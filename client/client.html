@@ -47,10 +47,7 @@
 
 <div id="result">
     <h2>Le classement final</h2>
-    <ul>
-        <li id="firstplace"></li>
-        <li id="secondplace"></li>
-        <li id="thirdplace"></li>
+    <ul id="ranking">
     </ul>
 </div>
 
@@ -80,10 +77,6 @@
         socket.emit('bet', {bet: bet, toss: toss});
     });
 
-    socket.on('result', (data) => {
-        document.getElementById('result').textContent = `Résultat : ${data.result} (${data.player})`;
-    });
-
     document.getElementById('chatform').addEventListener('submit', (e) => {
         e.preventDefault();
         console.log("Message envoyé");
@@ -103,7 +96,6 @@
         document.querySelector("#player-score").textContent = score
         document.querySelector("#bet").max = score
     })
-
 
     socket.on('message', (data) => {
         console.log('Message reçu du serveur : ', data);
@@ -129,6 +121,20 @@
             playerListElement.appendChild(playerItem);
         });
     });
+
+    socket.on('results', (ranking) => {
+    console.log("Classement final reçu :", ranking); 
+    
+    let rankingElement = document.getElementById('ranking');
+    rankingElement.innerHTML = ''; 
+
+    ranking.forEach((player, index) => {
+        let playerItem = document.createElement('li');
+        playerItem.textContent = `${index + 1}. ${player.name} - Score: ${player.score}`;
+        rankingElement.appendChild(playerItem);
+    });
+});
+
 
     socket.on('connect', () => {
         console.log('connected');
