@@ -73,7 +73,7 @@ function endGame(roomName) {
 }
 
 function startTimer(roomName) {
-    let remainingTime = 1
+    let remainingTime = 30
     let timer = setInterval(() => {
         io.to(roomName).emit("timeLeft", remainingTime)
         remainingTime--;
